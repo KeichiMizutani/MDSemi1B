@@ -14,6 +14,21 @@ var response = {
     ".*明日.*和歌山.*天気.*": "明日の和歌山の天気はずばり雪です"
 };
 
+/* TODO: jQueryの残骸
+$.ajax({ // json読み込み開始
+    type: 'GET',
+    url: 'response_test.json',
+    dataType: 'json'
+  })
+  .then(
+    function(json) { // jsonの読み込みに成功した時
+      console.log('成功');
+    },
+    function() { //jsonの読み込みに失敗した時
+      console.log('失敗');
+    }
+  );*/
+
 const startButton = document.querySelector('#startButton'); // 開始ボタン
 const stopButton = document.querySelector('#stopButton'); // 停止ボタン
 const resultOutput = document.querySelector('#resultOutput'); // 結果出力エリア
