@@ -14,32 +14,22 @@ var response = {
     ".*明日.*和歌山.*天気.*": "明日の和歌山の天気はずばり雪です"
 };
 
-/* TODO: jQueryの残骸
-$.ajax({ // json読み込み開始
-    type: 'GET',
-    url: './response_test.json',
-    dataType: 'json'
+/* TODO: jQueryの残骸*/
+$.ajax({
+    type: "GET",
+    url: "response_test.json",
+    dataType: "json"
 })
-    .then(
-        function (json) { // jsonの読み込みに成功した時
-            console.log('成功');
-        },
-        function () { //jsonの読み込みに失敗した時
-            console.log('失敗');
-        }
-    );
-    */
-
-$.getJSON('./response_test.json') // json読み込み開始
-    .done(function (json) { // jsonの読み込みに成功した時
-        console.log('成功');
+    // Ajaxリクエストが成功した場合
+    .done(function (data) {
+        alert('成功!');
+        alert(data);
     })
-    .fail(function () { // jsonの読み込みに失敗した時
-        console.log('失敗');
-    })
-    .always(function () { // 成功/失敗に関わらず実行
-        console.log('必ず実行される');
+    // Ajaxリクエストが失敗した場合
+    .fail(function (XMLHttpRequest, textStatus, errorThrown) {
+        alert(errorThrown);
     });
+
 
 
 const startButton = document.querySelector('#startButton'); // 開始ボタン
