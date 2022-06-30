@@ -14,6 +14,34 @@ var response = {
     ".*明日.*和歌山.*天気.*": "明日の和歌山の天気はずばり雪です"
 };
 
+/* TODO: jQueryの残骸
+$.ajax({ // json読み込み開始
+    type: 'GET',
+    url: './response_test.json',
+    dataType: 'json'
+})
+    .then(
+        function (json) { // jsonの読み込みに成功した時
+            console.log('成功');
+        },
+        function () { //jsonの読み込みに失敗した時
+            console.log('失敗');
+        }
+    );
+    */
+
+$.getJSON('./response_test.json') // json読み込み開始
+    .done(function (json) { // jsonの読み込みに成功した時
+        console.log('成功');
+    })
+    .fail(function () { // jsonの読み込みに失敗した時
+        console.log('失敗');
+    })
+    .always(function () { // 成功/失敗に関わらず実行
+        console.log('必ず実行される');
+    });
+
+
 const startButton = document.querySelector('#startButton'); // 開始ボタン
 const stopButton = document.querySelector('#stopButton'); // 停止ボタン
 const resultOutput = document.querySelector('#resultOutput'); // 結果出力エリア
@@ -41,36 +69,36 @@ asr.continuous = true; // 継続入力をオン
 let output = ''; // 出力
 
 // 認識結果が出力されたときのイベントハンドラ
-asr.onresult = function(event){
+asr.onresult = function (event) {
     let transcript = event.results[event.resultIndex][0].transcript; // 結果文字列
 
     let output_not_final = '';
     if (event.results[event.resultIndex].isFinal) { // 結果が確定（Final）のとき
-	    asr.abort(); // 音声認識を停止
-	    
+        asr.abort(); // 音声認識を停止
+
         let answer;
-        
+
         let keys = Object.keys(response);
-        keys.forEach(function(key) {
-            if(new RegExp(key).test(transcript)){ // 正規表現をtestしてtrue or false
-		        answer = response[key];
+        keys.forEach(function (key) {
+            if (new RegExp(key).test(transcript)) { // 正規表現をtestしてtrue or false
+                answer = response[key];
                 console.log(key + " : " + answer);
             }
         });
 
-        if(typeof answer == 'undefined'){
-	        answer = "ごめんなさい。わかりません。";
-    	}
-	
+        if (typeof answer == 'undefined') {
+            answer = "ごめんなさい。わかりません。";
+        }
+
         output += transcript + ' => ' + answer + '<br>';
 
-	    tts.text = answer;
-	    // 再生が終了（end）ときのイベントハンドラ（終了したときに実行される）
-	    tts.onend = function(event){
-	        asr.start(); // 音声認識を再開
-	    }
+        tts.text = answer;
+        // 再生が終了（end）ときのイベントハンドラ（終了したときに実行される）
+        tts.onend = function (event) {
+            asr.start(); // 音声認識を再開
+        }
 
-	    speechSynthesis.speak(tts); // 再生
+        speechSynthesis.speak(tts); // 再生
     } else { // 結果がまだ未確定のとき
         output_not_final = '<span style="color:#ddd;">' + transcript + '</span>';
     }
@@ -78,12 +106,12 @@ asr.onresult = function(event){
 }
 
 // 開始ボタンのイベントハンドラ
-startButton.addEventListener('click', function() {
+startButton.addEventListener('click', function () {
     asr.start();
 })
 
 // 停止ボタンのイベントハンドラ
-stopButton.addEventListener('click', function() {
+stopButton.addEventListener('click', function () {
     asr.abort();
     asr.stop();
 })
