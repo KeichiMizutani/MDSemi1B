@@ -69,8 +69,8 @@ asr.onresult = function (event) {
         let answer;
 
         let keys = Object.keys(response);
-        
-        
+
+
         keys.forEach(function (key) {
             if (new RegExp(key).test(transcript)) { // 正規表現をtestしてtrue or false
                 answer = response[key];
@@ -79,12 +79,12 @@ asr.onresult = function (event) {
         });
 
         console.log(data.response_data);
-        
-       for(i = 0; i < data.response_data.length; i++){
-        if(obj.response_data[i]!= null){
-            console.log(data.response_data[i].key + " : " + data.response_data[i].answer);
+
+        for (i = 0; i < data.response_data.length; i++) {
+            if (data.response_data[i] != null) {
+                console.log(data.response_data[i].key + " : " + data.response_data[i].answer);
+            }
         }
-       }
 
         if (typeof answer == 'undefined') {
             answer = "ごめんなさい。わかりません。";
