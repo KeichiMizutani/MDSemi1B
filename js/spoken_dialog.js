@@ -69,12 +69,20 @@ asr.onresult = function (event) {
         let answer;
 
         let keys = Object.keys(response);
+        
+        
         keys.forEach(function (key) {
             if (new RegExp(key).test(transcript)) { // 正規表現をtestしてtrue or false
                 answer = response[key];
                 console.log(key + " : " + answer);
             }
         });
+        
+       for(i = 0; i < obj.response_data.length; i++){
+        if(obj.response_data[i]!= null){
+            elem.innerHTML += "<div>" + obj.data[i].key + " : " + obj.data[i].answer + "</div>";
+        }
+       }
 
         if (typeof answer == 'undefined') {
             answer = "ごめんなさい。わかりません。";
