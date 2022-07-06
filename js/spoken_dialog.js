@@ -23,8 +23,10 @@ var weather_response = {
 };
 
 var southern_response = {
-    ".*帰り.*サザン.*":["平日ダイヤの次のサザンは:発 特急サザン難波行きです。:あと:分後に出発します。",["6:02","6:31","7:02","7:34","7:54","8:36","9:06","9:36","10:06","10:36","11:06","11:36","12:06","12:36","13:06","13:36","14:06","14:36","15:06","15:36","16:06","16:36","17:06","17:36","18:06","18:36","19:06","19:36","20:06","20:36","21:06","21:38","21:56","22:27"]]
+    ".*帰り.*サザン.*": ["平日ダイヤの次の難波方面サザンは:発です。あと:分後に出発します。", ["6:10", "6:31", "7:02", "7:34", "7:54", "8:36", "9:06", "9:36", "10:06", "10:36", "11:06", "11:36", "12:06", "12:36", "13:06", "13:36", "14:06", "14:36", "15:06", "15:36", "16:06", "16:36", "17:06", "17:36", "18:06", "18:36", "19:06", "19:36", "20:06", "20:36", "21:06", "21:38", "21:56", "22:27"]],
+    ".*行き.*サザン.*": ["平日ダイヤの次の難波方面サザンは:発です。あと:分後に出発します。", ["7:17", "7:44", "8:14", "8:43", "9:10", "9:45", "10:20", "10:50", "11:20", "11:50", "12:20", "12:50", "13:20", "13:50", "14:20", "14:50", "15:20", "15:50", "16:12", "16:45", "17:10", "17:40", "18:10", "18:40", "19:10", "19:40", "20:10", "20:40", "21:10", "21:45", "22:10", "22:40", "23:00", "23:35"]]
 }
+
 
 /* TODO: jQueryの残骸
 $.ajax({
@@ -83,7 +85,7 @@ asr.onresult = function (event) {
 
         let answer;
         let webpage;
-        
+
         //  デフォルト返答
         let keys = Object.keys(default_response);
         keys.forEach(function (key) {
@@ -96,11 +98,11 @@ asr.onresult = function (event) {
         if (typeof answer == 'undefined') {
             hasDefaultResponse = false;
             //answer = "ごめんなさい。わかりません。";
-        }else{
+        } else {
             hasDefaultResponse = true;
         }
 
-        if(!hasDefaultResponse){ // デフォルト返答に値するものがなかった時->天気返答
+        if (!hasDefaultResponse) { // デフォルト返答に値するものがなかった時->天気返答
             keys = Object.keys(weather_response);
 
             keys.forEach(function (key) {
@@ -114,14 +116,53 @@ asr.onresult = function (event) {
             if (typeof answer == 'undefined') {
                 hasWeatherResponse = false;
                 //answer = "ごめんなさい。わかりません。";
-            }else{
-               hasWeatherResponse = true;
+            } else {
+                hasWeatherResponse = true;
             }
         }
 
-        if(!hasDefaultResponse && !hasWeatherResponse){// デフォルト返答も天気返答もない->サザン返答
-            var newDate = new Date();
-            let difference = ;
+        if (!hasDefaultResponse && !hasWeatherResponse) {// デフォルト返答も天気返答もない->サザン返答
+
+            keys = Object.keys(southern_response);
+
+            keys.forEach(function (key) {
+                if (new RegExp(key).test(transcript)) {
+                    let ans = southern_response[key][0].split(":");
+                    let nowDate = new Date();
+                    console.log(nowDate);
+
+                    let nowTime = nowDate.getHours() * 60 + nowDate.getMinutes();
+                    console.log(nowTime);
+                    for (var i = 0; i < southern_response[key][1].length; i++) {
+                        let t = southern_response[key][1][i].split(":");
+                        let southernTime = Number(t[0]) * 60 + Number(t[1]);
+
+                        let isLast = false;
+
+                        if (southernTime > nowTime) {
+                            // "平日ダイヤの次のサザンは : 発 特急サザン難波行きです。  あと : 分後に出発します。"
+                            let m = southernTime - nowTime;
+                            answer = ans[0] + t[0] + "時" + t[1] + "分" + ans[1] + m + ans[2];
+                            break;
+                        }
+
+                        if (i == southern_response[key][1].length - 1) {
+                            isLast = true;
+                        }
+
+                        if (isLast) {
+                            answer = "終電を過ぎました。";
+                        }
+                    }
+
+
+                }
+            });
+
+            if (typeof answer == 'undefined') {
+                //hasWeatherResponse = false;
+                answer = "ごめんなさい。わかりません。";
+            }
         }
 
         output += transcript + ' => ' + answer + '<br>';
