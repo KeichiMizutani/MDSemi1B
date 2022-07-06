@@ -80,7 +80,7 @@ asr.onresult = function (event) {
         
        for(i = 0; i < obj.response_data.length; i++){
         if(obj.response_data[i]!= null){
-            elem.innerHTML += "<div>" + obj.data[i].key + " : " + obj.data[i].answer + "</div>";
+            console.log(obj.data[i].key + " : " + obj.data[i].answer);
         }
        }
 
