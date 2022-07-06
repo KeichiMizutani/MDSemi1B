@@ -77,10 +77,12 @@ asr.onresult = function (event) {
                 console.log(key + " : " + answer);
             }
         });
+
+        console.log(data.response_data);
         
        for(i = 0; i < obj.response_data.length; i++){
         if(obj.response_data[i]!= null){
-            console.log(obj.data[i].key + " : " + obj.data[i].answer);
+            console.log(data.response_data[i].key + " : " + data.response_data[i].answer);
         }
        }
 
