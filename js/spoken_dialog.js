@@ -90,118 +90,43 @@ asr.onresult = function (event) {
         let answer;
         let webpage;
 
+        answer = checkDefaultResponse(transcript);
+        answer = checkWeatherResponse(transcript);
+        webpage = checkWeatherURL(transcript);
+        answer = checkSouthernResponse(transcript);
+
+        // Yahoo! API
         let queryURL = URL + APIID + "&intext=" + transcript;
         console.log(queryURL);
 
-        //  デフォルト返答
-        let keys = Object.keys(default_response);
-        keys.forEach(function (key) {
-            if (new RegExp(key).test(transcript)) { // 正規表現をtestしてtrue or false
-                answer = default_response[key];
-                console.log(key + " : " + answer);
-            }
-        });
+        // HTTPリクエストの準備
+        const request = new XMLHttpRequest();
+        request.open('GET', queryURL, true);
+        request.responseType = 'json'; // レスポンスはJSON形式に変換
 
-        if (typeof answer == 'undefined') {
-            hasDefaultResponse = false;
-            //answer = "ごめんなさい。わかりません。";
-        } else {
-            hasDefaultResponse = true;
-        }
+        // HTTPの状態が変化したときのイベントハンドラ
+        request.onreadystatechange = function () {
+            if (this.readyState == 4 && this.status == 200) {
+                // readyState == 4 操作完了
+                // status == 200 リクエスト成功（HTTPレスポンス）
 
-        if (!hasDefaultResponse) { // デフォルト返答に値するものがなかった時->天気返答
-            keys = Object.keys(weather_response);
+                let res = this.response; // 結果はJSON形式
 
-            keys.forEach(function (key) {
-                if (new RegExp(key).test(transcript)) { // 正規表現をtestしてtrue or false
-                    answer = weather_response[key][0];
-                    webpage = weather_response[key][1];
-                    console.log(key + " : " + answer);
-                }
-            });
+                Object.keys(res.result).forEach(function (key) {
+                    console.log(key + ": " + res.result[key])
+                });
 
-            if (typeof answer == 'undefined') {
-                hasWeatherResponse = false;
-                //answer = "ごめんなさい。わかりません。";
-            } else {
-                hasWeatherResponse = true;
-            }
-        }
-
-        if (!hasDefaultResponse && !hasWeatherResponse) {// デフォルト返答も天気返答もない->サザン返答
-
-            keys = Object.keys(southern_response);
-
-            keys.forEach(function (key) {
-                if (new RegExp(key).test(transcript)) {
-                    let ans = southern_response[key][0].split(":");
-                    let nowDate = new Date();
-                    console.log(nowDate);
-
-                    let nowTime = nowDate.getHours() * 60 + nowDate.getMinutes();
-                    console.log(nowTime);
-                    for (var i = 0; i < southern_response[key][1].length; i++) {
-                        let t = southern_response[key][1][i].split(":");
-                        let southernTime = Number(t[0]) * 60 + Number(t[1]);
-
-                        let isLast = false;
-
-                        if (southernTime > nowTime) {
-                            // "平日ダイヤの次のサザンは : 発 特急サザン難波行きです。  あと : 分後に出発します。"
-                            let m = southernTime - nowTime;
-                            answer = ans[0] + t[0] + "時" + t[1] + "分" + ans[1] + m + ans[2];
-                            break;
-                        }
-
-                        if (i == southern_response[key][1].length - 1) {
-                            isLast = true;
-                        }
-
-                        if (isLast) {
-                            answer = "終電を過ぎました。";
-                        }
-                    }
-
-
-                }
-            });
-
-            if (typeof answer == 'undefined') {
-                hasSouthernrResponse = false;
-                //answer = "ごめんなさい。わかりません。";
-            }
-        }
-
-        if (!hasDefaultResponse && !hasWeatherResponse && !hasSouthernResponse) {// どの返答にも当てはまらない->Yahoo
-
-            // HTTPリクエストの準備
-            const request = new XMLHttpRequest();
-            request.open('GET', queryURL, true);
-            request.responseType = 'json'; // レスポンスはJSON形式に変換
-
-            // HTTPの状態が変化したときのイベントハンドラ
-            request.onreadystatechange = function () {
-                if (this.readyState == 4 && this.status == 200) {
-                    // readyState == 4 操作完了
-                    // status == 200 リクエスト成功（HTTPレスポンス）
-
-                    let res = this.response; // 結果はJSON形式
-
-                    Object.keys(res.result).forEach(function (key) {
-                        console.log(key + ": " + res.result[key])
-                    });
-
-                    // method が SAY のときのみ
-                    if (res.result.method == "SAY") {
-                        answer = res.result.param_text_tts || res.result.param_text;
-                    } else {
-                        answer = "ごめんなさい。わかりません。";
-                        //asr.start();  // 音声認識を再開
-                    }
+                // method が SAY のときのみ
+                if (res.result.method == "SAY") {
+                    answer = res.result.param_text_tts || res.result.param_text;
                 }
             }
-
         }
+
+        if(typeof answer == 'undefined'){
+            answer = "ごめんなさい。わかりません。";
+        }
+
 
         output += transcript + ' => ' + answer + '<br>';
 
@@ -233,3 +158,81 @@ stopButton.addEventListener('click', function () {
     asr.abort();
     asr.stop();
 })
+
+//  デフォルト返答 answerを返すメソッド
+function checkDefaultResponse(transcript) {
+    let answer;
+    let keys = Object.keys(default_response);
+
+    keys.forEach(function (key) {
+        if (new RegExp(key).test(transcript)) { // 正規表現をtestしてtrue or false
+            answer = default_response[key];
+            console.log(key + " : " + answer);
+        }
+    });
+
+    return answer;
+}
+
+// 天気返答 answerを返すメソッド
+function checkWeatherResponse(transcript) {
+    let answer;
+    let keys = Object.keys(weather_response);
+
+    keys.forEach(function (key) {
+        if (new RegExp(key).test(transcript)) { // 正規表現をtestしてtrue or false
+            answer = weather_response[key][0];
+            //webpage = weather_response[key][1];
+            console.log(key + " : " + answer);
+        }
+    });
+
+    return answer;
+}
+
+// 天気返答 URLを返す
+function checkWeatherURL(transcript) {
+    let webpage;
+    let keys = Object.keys(weather_response);
+
+    keys.forEach(function (key) {
+        if (new RegExp(key).test(transcript)) { // 正規表現をtestしてtrue or false
+            //answer = weather_response[key][0];
+            webpage = weather_response[key][1];
+        }
+    });
+
+    return webpage;
+}
+// サザンの返答
+function checkSouthernResponse(transcript) {
+    let answer;
+    keys = Object.keys(southern_response);
+
+    keys.forEach(function (key) {
+        if (new RegExp(key).test(transcript)) {
+            let ans = southern_response[key][0].split(":");
+            let nowDate = new Date();
+            let nowTime = nowDate.getHours() * 60 + nowDate.getMinutes();
+
+            for (var i = 0; i < southern_response[key][1].length; i++) {
+                let t = southern_response[key][1][i].split(":");
+                let southernTime = Number(t[0]) * 60 + Number(t[1]);
+
+                if (southernTime > nowTime) {
+                    // "平日ダイヤの次のサザンは : 発 特急サザン難波行きです。  あと : 分後に出発します。"
+                    let m = southernTime - nowTime;
+                    answer = ans[0] + t[0] + "時" + t[1] + "分" + ans[1] + m + ans[2];
+                    break;
+                }
+
+                // ループ最終でbreakされなければ
+                if (i == southern_response[key][1].length - 1) {
+                    answer = "終電を過ぎました。";
+                }
+            }
+        }
+    });
+
+    return answer;
+}
