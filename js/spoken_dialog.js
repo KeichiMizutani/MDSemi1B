@@ -45,6 +45,9 @@ $.ajax({
     });
 */
 
+const URL = "https://jlp.yahooapis.jp/NLUService/V1/analyze?appid="; // APIのリクエストURL
+const APIID = "dj00aiZpPVgwRzRYZEVMQ1JaUSZzPWNvbnN1bWVyc2VjcmV0Jng9OGY-"; // あなたのアプリケーションID
+
 
 const startButton = document.querySelector('#startButton'); // 開始ボタン
 const stopButton = document.querySelector('#stopButton'); // 停止ボタン
@@ -73,6 +76,7 @@ asr.continuous = true; // 継続入力をオン
 let output = ''; // 出力
 let hasDefaultResponse = true;
 let hasWeatherResponse = true;
+let hasSouthernResponse = true;
 
 
 // 認識結果が出力されたときのイベントハンドラ
@@ -85,6 +89,9 @@ asr.onresult = function (event) {
 
         let answer;
         let webpage;
+
+        let queryURL = URL + APIID + "&intext=" + transcript;
+        console.log(queryURL);
 
         //  デフォルト返答
         let keys = Object.keys(default_response);
@@ -160,9 +167,40 @@ asr.onresult = function (event) {
             });
 
             if (typeof answer == 'undefined') {
-                //hasWeatherResponse = false;
-                answer = "ごめんなさい。わかりません。";
+                hasSouthernrResponse = false;
+                //answer = "ごめんなさい。わかりません。";
             }
+        }
+
+        if (!hasDefaultResponse && !hasWeatherResponse && !hasSouthernResponse) {// どの返答にも当てはまらない->Yahoo
+
+            // HTTPリクエストの準備
+            const request = new XMLHttpRequest();
+            request.open('GET', queryURL, true);
+            request.responseType = 'json'; // レスポンスはJSON形式に変換
+
+            // HTTPの状態が変化したときのイベントハンドラ
+            request.onreadystatechange = function () {
+                if (this.readyState == 4 && this.status == 200) {
+                    // readyState == 4 操作完了
+                    // status == 200 リクエスト成功（HTTPレスポンス）
+
+                    let res = this.response; // 結果はJSON形式
+
+                    Object.keys(res.result).forEach(function (key) {
+                        console.log(key + ": " + res.result[key])
+                    });
+
+                    // method が SAY のときのみ
+                    if (res.result.method == "SAY") {
+                        answer = res.result.param_text_tts || res.result.param_text;
+                    } else {
+                        answer = "ごめんなさい。わかりません。";
+                        //asr.start();  // 音声認識を再開
+                    }
+                }
+            }
+
         }
 
         output += transcript + ' => ' + answer + '<br>';
