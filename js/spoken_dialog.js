@@ -8,6 +8,9 @@ var default_response = {
     ".*夢は.*": "世界を冒険することです",
     ".*好きな.*スポーツ.*": "水泳かな、浮いているだけなんだけどね",
     ".*好きな.*食べ物.*": "焼肉です",
+    ".*こんにちは.*": "こんにちは",
+    ".*おはよう.*": "おはようございます",
+    ".*こんばんは.*": "こんばんは",
     //".*和歌山.*天気.*": "和歌山の天気はたぶん晴れでしょう",
     //".*大阪.*天気.*": "大阪の天気は雨です。",
     //".*明日.*天気.*": "明日の天気は曇りだと思います",
@@ -91,42 +94,74 @@ asr.onresult = function (event) {
         let webpage;
 
         answer = checkDefaultResponse(transcript);
-        answer = checkWeatherResponse(transcript);
-        webpage = checkWeatherURL(transcript);
-        answer = checkSouthernResponse(transcript);
 
-        // Yahoo! API
-        let queryURL = URL + APIID + "&intext=" + transcript;
-        console.log(queryURL);
+        if (!hasDefaultResponse) {
 
-        // HTTPリクエストの準備
-        const request = new XMLHttpRequest();
-        request.open('GET', queryURL, true);
-        request.responseType = 'json'; // レスポンスはJSON形式に変換
+            answer = checkWeatherResponse(transcript);
+            webpage = checkWeatherURL(transcript);
 
-        // HTTPの状態が変化したときのイベントハンドラ
-        request.onreadystatechange = function () {
-            if (this.readyState == 4 && this.status == 200) {
-                // readyState == 4 操作完了
-                // status == 200 リクエスト成功（HTTPレスポンス）
+            if (!hasWeatherResponse) {
 
-                let res = this.response; // 結果はJSON形式
+                answer = checkSouthernResponse(transcript);
 
-                Object.keys(res.result).forEach(function (key) {
-                    console.log(key + ": " + res.result[key])
-                });
+                if (!hasSouthernResponse) {
 
-                // method が SAY のときのみ
-                if (res.result.method == "SAY") {
-                    answer = res.result.param_text_tts || res.result.param_text;
+                    // Yahoo! API
+                    let queryURL = URL + APIID + "&intext=" + transcript;
+                    console.log(queryURL);
+
+                    // HTTPリクエストの準備
+                    const request = new XMLHttpRequest();
+                    request.open('GET', queryURL, true);
+                    request.responseType = 'json'; // レスポンスはJSON形式に変換
+
+
+                    // HTTPの状態が変化したときのイベントハンドラ
+                    request.onreadystatechange = function () {
+
+                        console.log("HTTPの状態が変化したときのイベントハンドラ");
+
+                        if (this.readyState == 4 && this.status == 200) {
+                            // readyState == 4 操作完了
+                            // status == 200 リクエスト成功（HTTPレスポンス）
+
+                            let res = this.response; // 結果はJSON形式
+
+                            Object.keys(res.result).forEach(function (key) {
+                                console.log(key + ": " + res.result[key])
+                            });
+
+
+                            // method が SAY のときのみ
+                            if (res.result.method == "SAY") {
+                                answer = res.result.param_text_tts || res.result.param_text;
+                                console.log("Yahoo API answer is " + answer);
+
+                                tts.text = answer;
+
+                                // 再生が終了（end）ときのイベントハンドラ（終了したときに実行される）
+                                tts.onend = function (event) {
+                                    asr.start(); // 音声認識を再開
+                                }
+
+                                output += transcript + ' => ' + answer + '<br>';
+                                resultOutput.innerHTML = output;
+                                speechSynthesis.speak(tts);
+                            } else {
+                                answer = "ごめんなさい。わかりません。"
+                                console.log("Yahoo API: res.result.method != SAY");
+                                //asr.start();  // 音声認識を再開
+                            }
+                        }
+                    }
                 }
             }
         }
 
-        if(typeof answer == 'undefined'){
+        // ここまででanswerがundefinedの場合
+        if (typeof answer == 'undefined') {
             answer = "ごめんなさい。わかりません。";
         }
-
 
         output += transcript + ' => ' + answer + '<br>';
 
@@ -171,6 +206,12 @@ function checkDefaultResponse(transcript) {
         }
     });
 
+    if (typeof answer == 'undefined') {
+        hasDefaultResponse = false;
+    } else {
+        hasDefaultResponse = true;
+    }
+
     return answer;
 }
 
@@ -186,6 +227,12 @@ function checkWeatherResponse(transcript) {
             console.log(key + " : " + answer);
         }
     });
+
+    if (typeof answer == 'undefined') {
+        hasWeatherResponse = false;
+    } else {
+        hasWeatherResponse = true;
+    }
 
     return answer;
 }
@@ -233,6 +280,12 @@ function checkSouthernResponse(transcript) {
             }
         }
     });
+
+    if (typeof answer == 'undefined') {
+        hasSouthernResponse = false;
+    } else {
+        hasSouthernResponse = true;
+    }
 
     return answer;
 }
